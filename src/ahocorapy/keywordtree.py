@@ -13,6 +13,23 @@ Created on Jan 5, 2016
 from builtins import object
 
 
+"""
+edit by gavin:
+在代码中： 
+State类可以理解为节点，每一个节点包含symbol(表示某一个字符), identifier(表示当前节点的状态序号),parent(表示父节点),
+transitions(表示子节点), success(表示是否匹配到字符), matched_keyword(表示匹配到的关键词), longest_strict_suffix(指failure
+指向的节点
+
+KeywordTree就是字典树的类，zero_state表示根节点，_counter实际上也是表示当前节点的状态序号（会作为参数传给State类）
+_finalized表示字典树是否构建完成，只有在构建完成后，才能进行字符串匹配，一旦构建完成后就不能再添加关键词，
+_case_insensitive表示是否大小写敏感，True表示不敏感，False表示大小写敏感
+
+
+当前节点的failure状态指向父节点failure下的其他节点（如果字符能匹配上）
+如果不能匹配上，则去父节点failure指向节点的failure状态指向的节点中去寻找是否能匹配上
+"""
+
+
 class State(object):
     __slots__ = ['identifier', 'symbol', 'success', 'transitions', 'parent',
                  'matched_keyword', 'longest_strict_suffix']
@@ -222,3 +239,15 @@ class KeywordTree(object):
             deserialized_state.transitions = {
                 key: states[value] for key, value in serialized_state['transitions'].items()}
         self._zero_state = states[0]
+
+
+if __name__ == "__main__":
+    kdtree = KeywordTree(case_insensitive=True)
+    for i in ["中华人民共和国", "美利坚合众国", "国中", "樱木花道", "赤木晴子", "流川枫", "赤木刚宪"]:
+        kdtree.add(i)
+    kdtree.finalize()
+    sentence = "中华人民共和国简称中国， 最近和美利坚进行贸易战，但是我不care， 我闲暇时候看了看灌南高手，里面的樱木喜欢晴子，晴子仰慕流川枫， 赤木刚宪哈皮"
+    results = kdtree.search_all(sentence)
+    for result in results:
+        print(result)
+
